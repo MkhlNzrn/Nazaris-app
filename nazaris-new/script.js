@@ -186,26 +186,34 @@
     }
 
     try {
-      // Try to send via API if available
       var res = await fetch('/api/contact', {
         method: 'POST',
         body: formData
       });
-      
-      var data = await res.json().catch(function () { 
-        return { ok: false, error: 'Ошибка обработки ответа сервера' };
-      });
 
-      if (res.ok && data.ok) {
+      var data = null;
+      var responseText = await res.text();
+      if (responseText) {
+        try {
+          data = JSON.parse(responseText);
+        } catch (e) {
+          data = {};
+        }
+      }
+
+      if (res.ok && (data && data.ok)) {
         formMessage.textContent = 'Заявка отправлена успешно! Мы свяжемся с вами в ближайшее время.';
         formMessage.classList.add('success');
         form.reset();
         if (fileName) fileName.textContent = '';
-        
-        // Scroll to message
         formMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      } else if (res.ok && !data) {
+        formMessage.textContent = 'Заявка отправлена успешно! Мы свяжемся с вами в ближайшее время.';
+        formMessage.classList.add('success');
+        form.reset();
+        if (fileName) fileName.textContent = '';
       } else {
-        throw new Error(data.error || 'Ошибка отправки');
+        throw new Error((data && data.error) || 'Ошибка отправки');
       }
     } catch (err) {
       // Fallback: send via mailto or show contact info
