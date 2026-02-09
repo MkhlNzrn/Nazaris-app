@@ -1,0 +1,13 @@
+{
+  "name": "nazaris-new",
+  "private": true,
+  "description": "Сайт NAZARIS — разработка сайтов и приложений для бизнеса. Москва, Санкт-Петербург, Россия.",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "nodemailer": "^6.9.16"
+  }
+}
