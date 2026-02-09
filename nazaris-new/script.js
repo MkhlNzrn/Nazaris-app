@@ -114,8 +114,8 @@
     });
   }
 
-  // Form submission
-  var form = document.getElementById('contact-form');
+  // Form submission (form has id="feedback-form" to avoid conflict with section id="contact-form")
+  var form = document.getElementById('feedback-form');
   var formMessage = document.getElementById('form-message');
   if (!form || !formMessage) return;
 
