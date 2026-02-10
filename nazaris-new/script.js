@@ -260,7 +260,102 @@
     lastScroll = currentScroll;
   });
 
-  // Intersection Observer for animations
+  // Background gradient follows mouse (subtle)
+  var bodyEl = document.body;
+  document.addEventListener('mousemove', function(e) {
+    if (!bodyEl) return;
+    var x = (e.clientX / window.innerWidth) * 100;
+    var y = (e.clientY / window.innerHeight) * 100;
+    var x2 = 100 - x * 0.5;
+    var y2 = 100 - y * 0.5;
+    bodyEl.style.setProperty('--bg-pos-x', x + '%');
+    bodyEl.style.setProperty('--bg-pos-y', y + '%');
+    bodyEl.style.setProperty('--bg-pos-x2', x2 + '%');
+    bodyEl.style.setProperty('--bg-pos-y2', y2 + '%');
+  });
+
+  // Stats count-up when section is in view
+  var statsSection = document.getElementById('stats');
+  var statNumbers = document.querySelectorAll('.stat-number');
+  var statsAnimated = false;
+
+  function animateValue(el, start, end, suffix, duration) {
+    var startTime = null;
+    function step(timestamp) {
+      if (!startTime) startTime = timestamp;
+      var progress = Math.min((timestamp - startTime) / duration, 1);
+      var easeOut = 1 - Math.pow(1 - progress, 2);
+      var current = Math.floor(start + (end - start) * easeOut);
+      el.textContent = current + (suffix || '');
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  var statsObserver = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting && !statsAnimated) {
+        statsAnimated = true;
+        statNumbers.forEach(function(el) {
+          var target = parseInt(el.getAttribute('data-target'), 10);
+          var suffix = el.getAttribute('data-suffix') || '';
+          el.textContent = '0' + suffix;
+          animateValue(el, 0, target, suffix, 1800);
+        });
+      }
+    });
+  }, { threshold: 0.3 });
+
+  if (statsSection) statsObserver.observe(statsSection);
+
+  // Why-us cards: shuffle with FLIP animation
+  var whyUsGrid = document.getElementById('why-us-grid');
+  var whyUsCards = whyUsGrid ? Array.prototype.slice.call(whyUsGrid.querySelectorAll('.why-us-card')) : [];
+
+  function shuffleArray(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i];
+      a[i] = a[j];
+      a[j] = t;
+    }
+    return a;
+  }
+
+  function runWhyUsShuffle() {
+    if (whyUsCards.length < 2) return;
+    var first = whyUsCards.map(function(card) {
+      return card.getBoundingClientRect();
+    });
+    var indices = whyUsCards.map(function(_, i) { return i; });
+    var shuffled = shuffleArray(indices);
+    whyUsCards.forEach(function(card, i) {
+      card.style.transition = 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+      card.style.order = shuffled[i];
+    });
+    if (whyUsGrid) void whyUsGrid.offsetHeight;
+    requestAnimationFrame(function() {
+      whyUsCards.forEach(function(card, i) {
+        var rect = card.getBoundingClientRect();
+        var oldRect = first[i];
+        var dx = oldRect.left - rect.left;
+        var dy = oldRect.top - rect.top;
+        card.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
+      });
+      requestAnimationFrame(function() {
+        whyUsCards.forEach(function(card) {
+          card.style.transform = '';
+        });
+      });
+    });
+  }
+
+  if (whyUsGrid && whyUsCards.length > 0) {
+    setInterval(runWhyUsShuffle, 5000);
+  }
+
+  // Intersection Observer for fade-in animations
   var observerOptions = {
     threshold: 0.1,
     rootMargin: '0px 0px -50px 0px'
@@ -275,8 +370,7 @@
     });
   }, observerOptions);
 
-  // Observe service cards and contact items
-  document.querySelectorAll('.service-card, .contact-item').forEach(function(el) {
+  document.querySelectorAll('.service-item, .contact-item, .stat-item, .why-us-card').forEach(function(el) {
     el.style.opacity = '0';
     el.style.transform = 'translateY(20px)';
     el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
